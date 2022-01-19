@@ -1,6 +1,9 @@
 import requests
 import json
 import logging
+from LogWeather import LogModule
+l = LogModule()
+l.setUp()
 
 logg = logging.getLogger("WeatherLogger.WorkLogger")
 logg.debug("Initialize Weather")
@@ -14,7 +17,10 @@ class Weather:
         logg.info('Start work with openweathermap.org...')
         logg.info('Try to get data from the openweathermap.org...')
         data = requests.get(f'http://api.openweathermap.org/data/2.5/weather?q={city}&lang={lang}&units=metric&appid={API}').json()
-        if not data:
+        if data:
+            if data['cod'] == '404' or data['cod'] == '400':
+                logg.error('Getting an error : ' + data['message'])
+                return None
             logg.info('Processing a response from openweathermap.org...')
             weather = {
             'description': data['weather'][0]['main'],
@@ -32,21 +38,26 @@ class Weather:
             return None
 
     @staticmethod
-    def get_weather_date(city="Москва", lang="ru", date = "") -> dict:
+    def get_weather_date(city="Москва", lang="ru", date_ = "") -> dict:
         logg.info('Try to get current weather by name of the city, language and date...')
         logg.info('Initialize API for openweathermap.org...')
         API = '8397aa1b69899690124619bad12a067e'
         logg.info('Start work with openweathermap.org...')
         logg.info('Try to get data from the openweathermap.org...')
         data = requests.get(f'http://api.openweathermap.org/data/2.5/forecast?q={city}&lang={lang}&units=metric&appid={API}').json()
-        if not data:
+        if data['cod']=='404' or data['cod']=='400':
+            logg.error('Getting an error : '+ data['message'])
+            return None
+        if data:
             logg.info('Processing a response from openweathermap.org...')
             finded = None
             for i in data['list']:
-                if (i['dt_txt'][:10]).replace('-', '.') == date and i['dt_txt'][10:-3] ==' 12:00':
+                if (i['dt_txt'][:10]).replace('-', '.') == date_ and i['dt_txt'][10:-3] ==' 12:00':
                     print(i['dt_txt'])#[:10])
                     finded = i
             data = finded
+            if not data:
+                return data
             weather = {
                 'description': data['weather'][0]['main'],
                 'text': data['weather'][0]['description'],
